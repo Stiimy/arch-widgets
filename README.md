@@ -40,7 +40,7 @@ sudo pacman -S networkmanager bluez-utils brightnessctl wireplumber jq
 yay -S quickshell-git iw
 
 # 2. Clone the widgets
-git clone https://github.com/Stiimy/sylph-widgets.git ~/.config/quickshell
+git clone https://github.com/Stiimy/arch-widgets.git ~/.config/quickshell
 
 # 3. Add keybinds to ~/.config/hypr/keybindings.conf
 cat >> ~/.config/hypr/keybindings.conf << 'EOF'
