@@ -18,7 +18,7 @@
 
 | 🎮 Keybind | 🧩 Widget | 🔧 What it does |
 |:----------:|-----------|-----------------|
-| `Super + N` | **Control Center** | Battery · Brightness · Volume · Live notifications |
+| `Super + N` | **Control Center** | Battery · Clock · Brightness · Volume · Live notifications (dunst) |
 | `Super + R` | **Network** | WiFi scan & connect · Bluetooth scan/pair · Ethernet · Refresh |
 | `Super + O` | **Calendar** | Monthly view · Weather forecast · Day navigation |
 
