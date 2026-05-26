@@ -1,9 +1,8 @@
 import QtQuick
-import QtCore
 import QtQuick.Window
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Services.Notifications
+import Quickshell.Io
 
 PanelWindow {
     id: root
@@ -29,48 +28,60 @@ PanelWindow {
         onActivated: { root.visible = false }
     }
     
-    // ── Notification Server ──
-    NotificationServer {
-        id: notifServer
-        bodySupported: true
-        actionsSupported: true
-        imageSupported: true
+    // Trigger first poll immediately
+    Component.onCompleted: { dunstPoller.running = true }
+    
+    // ── Poll dunst history every 2s ──
+    property var _liveNotifs: ({})
+    ListModel { id: _notifModel }
+    
+    Process {
+        id: dunstPoller
+        command: ["bash", Quickshell.env("HOME") + "/.config/quickshell/battery-widget/dunst_poller.sh"]
+        running: false
         
-        onNotification: (n) => {
-            n.tracked = true
-            notifCounter++
-            let uid = notifCounter
-            _liveNotifs[uid] = n
-            
-            let actions = []
-            if (n.actions) {
-                for (let i = 0; i < n.actions.length; i++) {
-                    actions.push(JSON.stringify({
-                        id: n.actions[i].identifier || "",
-                        text: n.actions[i].text || n.actions[i].name || "Action"
-                    }))
-                }
-            }
-            
-            _notifModel.insert(0, {
-                uid: uid, appName: n.appName || "System",
-                summary: n.summary || "Notification",
-                body: n.body || "", appIcon: n.appIcon || "",
-                actionsJson: JSON.stringify(actions),
-                timestamp: new Date(), hasActions: actions.length > 0, notif: n
-            })
-            
-            while (_notifModel.count > 50) {
-                let last = _notifModel.get(_notifModel.count - 1)
-                delete _liveNotifs[last.uid]
-                _notifModel.remove(_notifModel.count - 1)
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    let data = JSON.parse(this.text.trim())
+                    // Diff with current model: add new, remove old
+                    let currentIds = {}
+                    for (let i = 0; i < _notifModel.count; i++) {
+                        currentIds[_notifModel.get(i).uid] = true
+                    }
+                    
+                    // Add new notifications
+                    for (let j = 0; j < data.length; j++) {
+                        let n = data[j]
+                        if (!currentIds[n.uid]) {
+                            _notifModel.insert(0, {
+                                uid: n.uid,
+                                appName: n.appName,
+                                summary: n.summary,
+                                body: n.body,
+                                appIcon: n.appIcon,
+                                actionsJson: n.actionsJson,
+                                timestamp: new Date(n.timestamp * 1000),
+                                hasActions: n.hasActions,
+                                notif: null
+                            })
+                        }
+                    }
+                    
+                    // Remove stale (keep max 50)
+                    while (_notifModel.count > 50) {
+                        _notifModel.remove(_notifModel.count - 1)
+                    }
+                } catch(e) {}
             }
         }
     }
     
-    property int notifCounter: 0
-    property var _liveNotifs: ({})
-    ListModel { id: _notifModel }
+    // Poll dunst every 2 seconds
+    Timer {
+        interval: 2000; running: true; repeat: true
+        onTriggered: { if (!dunstPoller.running) dunstPoller.running = true }
+    }
     
     Loader {
         id: loader

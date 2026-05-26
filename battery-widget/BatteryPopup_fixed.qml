@@ -189,7 +189,7 @@ Item {
             "cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -n1 || echo '0'; " +
             "cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -n1 || echo 'Unknown'; " +
             "powerprofilesctl get 2>/dev/null || echo 'balanced'; " +
-            "awk '{print int($1/3600)\"h \"int(($1%3600)/60)\"m\"}' /proc/uptime 2>/dev/null || echo '0h 0m'; " +
+            "date '+%H:%M' 2>/dev/null || echo '00:00'; " +
             "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk '{print int($2*100), ($3==\"[MUTED]\"?\"off\":\"on\")}' || echo '0 on'; " +
             "brightnessctl -m 2>/dev/null | awk -F, '{print substr($4, 1, length($4)-1)}' || echo '0'"
         ]
@@ -205,10 +205,10 @@ Item {
                     window.batStatus = lines[1];
                     window.powerProfile = lines[2];
                     
-                    let upParts = lines[3].split("h ");
+                    let upParts = lines[3].split(":");
                     if (upParts.length === 2) {
                         window.upHours = parseInt(upParts[0]) || 0;
-                        window.upMins = parseInt(upParts[1].replace("m", "")) || 0;
+                        window.upMins = parseInt(upParts[1]) || 0;
                     }
 
                     if (!window.isDraggingVol) {
@@ -842,7 +842,7 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter 
                                 }
                                 Text { 
-                                    text: "HR"; font.pixelSize: window.s(8); font.family: "JetBrains Mono"; font.weight: Font.Bold
+                                    text: "H"; font.pixelSize: window.s(8); font.family: "JetBrains Mono"; font.weight: Font.Bold
                                     color: window.subtext0; anchors.horizontalCenter: parent.horizontalCenter 
                                 }
                             }
@@ -881,7 +881,7 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter 
                                 }
                                 Text { 
-                                    text: "MIN"; font.pixelSize: window.s(8); font.family: "JetBrains Mono"; font.weight: Font.Bold
+                                    text: "M"; font.pixelSize: window.s(8); font.family: "JetBrains Mono"; font.weight: Font.Bold
                                     color: window.subtext0; anchors.horizontalCenter: parent.horizontalCenter 
                                 }
                             }
